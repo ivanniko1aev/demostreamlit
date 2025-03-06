@@ -310,7 +310,122 @@ else:
     # Source/Campaign Summary
     st.header(f"{agg_type} Summary")
     if not agg_data.empty:
+        # Show the existing table
         st.dataframe(format_table_data(agg_data), use_container_width=True)
+        
+        # Add visualizations
+        st.subheader(f"Performance Metrics by {agg_type}")
+        
+        # Create tabs for different visualizations
+        tab1, tab2, tab3 = st.tabs(["Inquiries & Orders", "Revenue & Costs", "Conversion Metrics"])
+        
+        with tab1:
+            # Bar chart for Inquiries and Orders
+            fig_inq_orders = go.Figure()
+            
+            # Add Inquiries bars
+            fig_inq_orders.add_trace(go.Bar(
+                name='Inquiries',
+                x=agg_data['Display Source'],
+                y=agg_data['Inquiries'],
+                marker_color='rgb(55, 83, 109)'
+            ))
+            
+            # Add Orders bars
+            fig_inq_orders.add_trace(go.Bar(
+                name='Orders',
+                x=agg_data['Display Source'],
+                y=agg_data['Orders'],
+                marker_color='rgb(26, 118, 255)'
+            ))
+            
+            # Update layout
+            fig_inq_orders.update_layout(
+                title=f'Inquiries and Orders by {agg_type}',
+                xaxis_tickangle=-45,
+                barmode='group',
+                height=500,
+                yaxis_title='Count',
+                xaxis_title=agg_type
+            )
+            
+            st.plotly_chart(fig_inq_orders, use_container_width=True)
+
+        with tab2:
+            # Bar chart for Revenue and Costs
+            fig_rev_cost = go.Figure()
+            
+            # Add Revenue bars
+            fig_rev_cost.add_trace(go.Bar(
+                name='Revenue',
+                x=agg_data['Display Source'],
+                y=agg_data['Total Job Amount'],
+                marker_color='rgb(0, 128, 0)'
+            ))
+            
+            # Add Cost bars
+            fig_rev_cost.add_trace(go.Bar(
+                name='Campaign Cost',
+                x=agg_data['Display Source'],
+                y=agg_data['Campaign Cost'],
+                marker_color='rgb(255, 69, 0)'
+            ))
+            
+            # Update layout
+            fig_rev_cost.update_layout(
+                title=f'Revenue and Campaign Costs by {agg_type}',
+                xaxis_tickangle=-45,
+                barmode='group',
+                height=500,
+                yaxis_title='Amount ($)',
+                xaxis_title=agg_type,
+                yaxis=dict(tickformat="$,")
+            )
+            
+            st.plotly_chart(fig_rev_cost, use_container_width=True)
+
+        with tab3:
+            # Create conversion metrics visualization
+            fig_conv = go.Figure()
+            
+            # Calculate conversion rates
+            agg_data['Conversion Rate %'] = (agg_data['Orders'] / agg_data['Pricing Sent'] * 100).round(1)
+            agg_data['Booking Rate %'] = (agg_data['Pricing Sent'] / agg_data['Inquiries'] * 100).round(1)
+            
+            # Add Conversion Rate line
+            fig_conv.add_trace(go.Scatter(
+                x=agg_data['Display Source'],
+                y=agg_data['Conversion Rate %'],
+                name='Conversion Rate',
+                mode='lines+markers+text',
+                text=agg_data['Conversion Rate %'].apply(lambda x: f'{x}%'),
+                textposition='top center',
+                line=dict(color='rgb(0, 128, 0)', width=2)
+            ))
+            
+            # Add Booking Rate line
+            fig_conv.add_trace(go.Scatter(
+                x=agg_data['Display Source'],
+                y=agg_data['Booking Rate %'],
+                name='Booking Rate',
+                mode='lines+markers+text',
+                text=agg_data['Booking Rate %'].apply(lambda x: f'{x}%'),
+                textposition='bottom center',
+                line=dict(color='rgb(26, 118, 255)', width=2)
+            ))
+            
+            # Update layout
+            fig_conv.update_layout(
+                title=f'Conversion Metrics by {agg_type}',
+                xaxis_tickangle=-45,
+                height=500,
+                yaxis_title='Rate (%)',
+                xaxis_title=agg_type,
+                yaxis=dict(tickformat=".1f"),
+                showlegend=True
+            )
+            
+            st.plotly_chart(fig_conv, use_container_width=True)
     else:
         st.warning("No summary data to display.")
 
